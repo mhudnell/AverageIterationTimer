@@ -72,8 +72,8 @@ void AverageIterationTimer::PrintAverageDurations() const
 	std::cout << "======== AverageIterationTimer Results ========" << std::endl;
 
     for (const std::string& key : insertion_order_) {
-		auto& tup = duration_totals_[key];
-		auto& duration = std::get<0>(tup);
+		const auto& tup = duration_totals_.at(key);
+		const auto& duration = std::get<0>(tup);
 		const int count = std::get<1>(tup);
 
 		const double elapsed = static_cast<double>(duration.count()) / static_cast<double>(count) / 1e3;  // convert micro to milli
