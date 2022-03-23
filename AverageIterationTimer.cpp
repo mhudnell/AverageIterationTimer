@@ -1,6 +1,8 @@
 #include "AverageIterationTimer.h"
 
+#include <algorithm>
 #include <cassert>
+#include <iomanip>
 #include <iostream>
 
 static std::chrono::time_point<std::chrono::steady_clock> get_time_point() {
@@ -66,18 +68,44 @@ void AverageIterationTimer::ScrapTimepoint()
 	current_timechunks_.pop_back();
 }
 
-// TODO: print out in table format, names in left column, times in right column, should be easier to read
 void AverageIterationTimer::PrintAverageDurations() const
 {
-	std::cout << "======== AverageIterationTimer Results ========" << std::endl;
+	std::cout << std::string(25, '=') << " AverageIterationTimer Results " << std::string(25, '=') << std::endl;
+	std::cout << std::fixed << std::setprecision(3);  // print numbers to 3 decimal places
 
+    // pre-determine spacing parameters
+	int max_width = 5;
+	int max_num_digits = 1;  // number of digits left of the decimal point
     for (const std::string& key : insertion_order_) {
+		if (key.size() > max_width) { max_width = static_cast<int>(key.size()); }
+
+		const auto& tup = duration_totals_.at(key);
+		const auto& duration = std::get<0>(tup);
+		const int count = std::get<1>(tup);
+
+        double elapsed = static_cast<double>(duration.count()) / static_cast<double>(count) / 1e3;  // convert micro to milli
+
+		int num_digits = 1;
+        while (elapsed > 10) {
+			elapsed /= 10;
+			num_digits++;
+        }
+		max_num_digits = std::max(max_num_digits, num_digits);
+    }
+	max_width = std::min(max_width, 60);  // if a key name is longer than 60 chars, it will no longer be aligned, just let it run on
+
+	for (const std::string& key : insertion_order_) {
 		const auto& tup = duration_totals_.at(key);
 		const auto& duration = std::get<0>(tup);
 		const int count = std::get<1>(tup);
 
 		const double elapsed = static_cast<double>(duration.count()) / static_cast<double>(count) / 1e3;  // convert micro to milli
-		std::cout << key.c_str() << ": " <<
-			elapsed << " ms avg" << std::endl;
-    }
+
+        // print out key name, add padding for alignment
+		std::cout << std::left << std::setw(max_width) << std::setfill('-') << key.c_str() << "--> ";
+
+        // print out time in ms, align numbers at the decimal point
+		std::cout << std::right << std::setw(max_num_digits + 4) << std::setfill(' ') << elapsed << " ms" << std::endl;
+		// +4 for the decimal point, and 3 trailing digits
+	}
 }
