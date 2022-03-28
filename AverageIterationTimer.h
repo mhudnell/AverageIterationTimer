@@ -1,5 +1,6 @@
 #pragma once
 #include <chrono>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -33,8 +34,8 @@ private:
 		TimeChunk(std::string name, const std::chrono::time_point<std::chrono::steady_clock>& begin) : name(std::move(name)), begin(begin) {}
 
 		std::string name;
-		std::chrono::time_point<std::chrono::steady_clock> begin;
-		std::chrono::time_point<std::chrono::steady_clock> end;
+		std::optional<std::chrono::time_point<std::chrono::steady_clock>> begin;  // use optional to initialize to null, so we can know if these have ever been set
+		std::optional<std::chrono::time_point<std::chrono::steady_clock>> end;
 	};
 
 	void EndTimepoint(const std::chrono::time_point<std::chrono::steady_clock>& t);

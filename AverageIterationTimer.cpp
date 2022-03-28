@@ -18,17 +18,23 @@ void AverageIterationTimer::SetTimepoint(const std::string& timepoint_name) {
 	auto t = get_time_point();
 
 	// end previous chunk if it exists
-	EndTimepoint(t);
+    if (!current_timechunks_.empty() && !current_timechunks_.back().end) {  // indicates there is a timechunk we need to end
+		EndTimepoint(t);
+    }
 
 	// start the next chunk
 	current_timechunks_.emplace_back(timepoint_name, t);
 }
 
-// TODO: check to see if the timepoint has already been 'ended', throw error if it has
 void AverageIterationTimer::EndTimepoint(const std::chrono::time_point<std::chrono::steady_clock>& t) {
-	if (!current_timechunks_.empty()) {
-		current_timechunks_.back().end = t;
+	if (current_timechunks_.empty()) {
+		throw std::runtime_error("Calling EndTimepoint() in an invalid location. There is no timechunk to end.");
 	}
+	if (current_timechunks_.back().end) {
+		throw std::runtime_error("Calling EndTimepoint() in an invalid location. The most recent timechunk ("+ current_timechunks_.back().name +") has already been ended.");
+	}
+
+	current_timechunks_.back().end = t;
 }
 
 void AverageIterationTimer::EndTimepoint() {
@@ -40,14 +46,18 @@ void AverageIterationTimer::IterationFinished() {
 	assert(!current_timechunks_.empty());
 
 	for (const TimeChunk& tc : current_timechunks_) {
+        if (!tc.begin || !tc.end) {
+			throw std::runtime_error("Timechunk (" + tc.name + ") was never properly ended! Use EndTimepoint() or ScrapTimepoint() / ScrapIteration() to describe your intent.");
+        }
+
 		if (duration_totals_.count(tc.name)) {  // already exists
 			auto& tup = duration_totals_[tc.name];
-            std::get<0>(tup) += tc.end - tc.begin;
+            std::get<0>(tup) += *tc.end - *tc.begin;
 			std::get<1>(tup) += 1;
 		}
 		else {
 			insertion_order_.push_back(tc.name);
-			duration_totals_[tc.name] = std::make_tuple(tc.end - tc.begin, 1);
+			duration_totals_[tc.name] = std::make_tuple(*tc.end - *tc.begin, 1);
 		}
 	}
 
