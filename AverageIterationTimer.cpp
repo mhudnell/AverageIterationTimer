@@ -14,6 +14,51 @@ static long long get_elapsed_ms(const std::chrono::time_point<std::chrono::stead
 	return std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
 }
 
+SingleUseTimer::SingleUseTimer(std::string name, bool auto_start) : name_(std::move(name))
+{
+	if (auto_start) { Start(); }
+}
+
+void SingleUseTimer::Start()
+{
+    if (timechunk_) {
+		throw std::runtime_error("This timer has already been started.");
+    }
+
+	auto t = get_time_point();
+
+	timechunk_ = TimeChunk(name_, t);
+}
+
+void SingleUseTimer::End()
+{
+    if (!timechunk_) {
+		throw std::runtime_error("This timer was never started.");
+    }
+    if (timechunk_->end) {
+        throw std::runtime_error("This timer was already ended.");
+    }
+
+    auto t = get_time_point();
+	timechunk_->end = t;
+}
+
+void SingleUseTimer::PrintDuration() const
+{
+	if (!timechunk_) {
+		throw std::runtime_error("This timer was never started.");
+	}
+	if (!timechunk_->end) {
+		throw std::runtime_error("This timer was never ended.");
+	}
+
+	const std::chrono::duration<double> duration = *timechunk_->end - *timechunk_->begin;
+	const double elapsed = duration.count();
+
+	std::cout << std::fixed << std::setprecision(2);  // print numbers to 2 decimal places
+	std::cout << "SingleUseTimer: " << name_.c_str() << ": " << elapsed << " seconds" << std::endl;
+}
+
 void AverageIterationTimer::SetTimepoint(const std::string& timepoint_name) {
 	auto t = get_time_point();
 
@@ -43,7 +88,7 @@ void AverageIterationTimer::EndTimepoint() {
 }
 
 void AverageIterationTimer::IterationFinished() {
-	assert(!current_timechunks_.empty());
+	//assert(!current_timechunks_.empty());
 
 	for (const TimeChunk& tc : current_timechunks_) {
         if (!tc.begin || !tc.end) {
@@ -81,7 +126,8 @@ void AverageIterationTimer::ScrapTimepoint()
 void AverageIterationTimer::PrintAverageDurations() const
 {
 	std::cout << std::string(25, '=') << " AverageIterationTimer Results " << std::string(25, '=') << std::endl;
-	std::cout << std::fixed << std::setprecision(3);  // print numbers to 3 decimal places
+	std::streamsize precision_default = std::cout.precision();  // get current precision value, so we can reset it afterwards
+	std::cout << std::fixed << std::setprecision(3);            // print numbers to 3 decimal places
 
     // pre-determine spacing parameters
 	int max_width = 5;
@@ -118,4 +164,6 @@ void AverageIterationTimer::PrintAverageDurations() const
 		std::cout << std::right << std::setw(max_num_digits + 4) << std::setfill(' ') << elapsed << " ms" << std::endl;
 		// +4 for the decimal point, and 3 trailing digits
 	}
+
+	std::cout << std::defaultfloat << std::setprecision(precision_default);  // reset precision to default
 }

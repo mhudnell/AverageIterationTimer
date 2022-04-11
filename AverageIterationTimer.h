@@ -6,6 +6,33 @@
 #include <vector>
 #include <tuple>
 
+struct TimeChunk {
+	TimeChunk(std::string name, const std::chrono::time_point<std::chrono::steady_clock>& begin) : name(std::move(name)), begin(begin) {}
+
+	std::string name;
+	std::optional<std::chrono::time_point<std::chrono::steady_clock>> begin;  // use optional to initialize to null, so we can know if these have ever been set
+	std::optional<std::chrono::time_point<std::chrono::steady_clock>> end;
+};
+
+class SingleUseTimer
+{
+public:
+    /**
+     * \param name Name of the timer.
+     * \param auto_start Automatically starts the timer when object is created. If false, you must call Start() manually.
+     */
+	SingleUseTimer(std::string name, bool auto_start=true);
+
+	void Start();
+
+	void End();
+
+	void PrintDuration() const;
+
+private:
+	std::optional<TimeChunk> timechunk_;  // use optional so we can know if the timechunk has been properly initialized
+	const std::string name_;
+};
 
 class AverageIterationTimer {
 public:
@@ -29,14 +56,6 @@ public:
 	void PrintAverageDurations() const;
 
 private:
-
-	struct TimeChunk {
-		TimeChunk(std::string name, const std::chrono::time_point<std::chrono::steady_clock>& begin) : name(std::move(name)), begin(begin) {}
-
-		std::string name;
-		std::optional<std::chrono::time_point<std::chrono::steady_clock>> begin;  // use optional to initialize to null, so we can know if these have ever been set
-		std::optional<std::chrono::time_point<std::chrono::steady_clock>> end;
-	};
 
 	void EndTimepoint(const std::chrono::time_point<std::chrono::steady_clock>& t);
 
