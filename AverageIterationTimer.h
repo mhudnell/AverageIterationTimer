@@ -17,10 +17,10 @@ struct TimeChunk {
 class SingleUseTimer
 {
 public:
-    /**
-     * \param name Name of the timer.
-     * \param auto_start Automatically starts the timer when object is created. If false, you must call Start() manually.
-     */
+	/**
+	 * \param name Name of the timer.
+	 * \param auto_start Automatically starts the timer when object is created. If false, you must call Start() manually.
+	 */
 	SingleUseTimer(std::string name, bool auto_start=true);
 
 	void Start();
@@ -37,7 +37,7 @@ private:
 class AverageIterationTimer {
 public:
 
-    // Starts a new timechunk with name `timepoint_name`. Ends the previous timechunk if it exists.
+	// Starts a new timechunk with name `timepoint_name`. Ends the previous timechunk if it exists.
 	void SetTimepoint(const std::string& timepoint_name);
 
 	// Terminates the previous timechunk. Inteded to be used only once, for the last timechunk;
@@ -47,10 +47,10 @@ public:
 	// Adds timechunk to the duration totals, and clears current_timechunks_
 	void IterationFinished();
 
-    // Throws away the current iteration timechunks, they will not be included in `duration_totals_`
+	// Throws away the current iteration timechunks, they will not be included in `duration_totals_`
 	void ScrapIteration();
 
-    // Scraps the most recent timepoint with was started with SetTimepoint()
+	// Scraps the most recent timepoint with was started with SetTimepoint()
 	void ScrapTimepoint();
 
 	void PrintAverageDurations() const;
